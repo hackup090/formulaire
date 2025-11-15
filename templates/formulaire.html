@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Décrivez un problème</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body { padding:30px; background:#f4f6f8; }
+    .card { max-width:900px; margin:0 auto; }
+  </style>
+</head>
+<body>
+  <div class="card p-4">
+    <h3>Quel est le principal problème ou défi que vous rencontrez ?</h3>
+    <form id="problemForm" autocomplete="off">
+      <div class="mb-3">
+        <label class="form-label">Décrivez le problème</label>
+        <textarea name="probleme" class="form-control" rows="4" required></textarea>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">Depuis combien de temps vivez-vous ce problème ?</label>
+        <select name="periode" class="form-select">
+          <option>Depuis quelques jours</option>
+          <option>Depuis quelques semaines</option>
+          <option>Depuis plusieurs mois</option>
+          <option>Depuis longtemps</option>
+        </select>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">Quel impact cela a-t-il sur vous ?</label>
+        <textarea name="impact" class="form-control" rows="2"></textarea>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">Avez-vous déjà essayé de le résoudre ? Si oui, comment ?</label>
+        <textarea name="essai" class="form-control" rows="2"></textarea>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">Que devrait apporter la solution idéale ?</label>
+        <textarea name="attentes" class="form-control" rows="2"></textarea>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label"> Serez-vous prêt à payer pour une solution qui résoud votre probleme ?</label>
+        <select name = "viabilite" class="form-select">
+          <option>Oui,je le peux</option>
+          <option>Honnêtement,non</option>
+          <option>Peut-être</option>
+        </select>
+      </div>
+       
+      <button id="submitBtn" type="submit" class="btn btn-success">Valider</button>
+    </form>
+  </div>
+
+  <div class="modal fade" id="afterModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-md modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-body">
+          <p>Pensez mûrement aux autres problèmes que vous rencontrez tous les jours.Que ce soit personel,professionnel ou social, dévoilez-les tous, cela pourrait être résolu.</p>
+        </div>
+        <div class="modal-footer">
+          <button id="contBtn" class="btn btn-primary">Continuer</button>
+          <button id="noThanks" class="btn btn-secondary">Non merci</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    (function () {
+      const form = document.getElementById('problemForm');
+      const submitBtn = document.getElementById('submitBtn');
+      const afterModalEl = document.getElementById('afterModal');
+      const afterModal = new bootstrap.Modal(afterModalEl);
+      const contBtn = document.getElementById('contBtn');
+      const noThanks = document.getElementById('noThanks');
+
+      // helper: show alert toast (simple)
+      function showAlert(msg) {
+        alert(msg);
+      }
+
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Enregistrement...';
+
+        const data = new FormData(form);
+
+        try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 15000); // 15s timeout
+
+          // 🔑 FIX: Changed '/submit_problem' to '/submit_probleme'
+          const resp = await fetch('/submit_problem', {
+            method: 'POST',
+            body: data,
+            signal: controller.signal,
+            credentials: 'same-origin'
+          });
+
+          clearTimeout(timeoutId);
+
+          if (!resp.ok) {
+            // si le serveur renvoie 4xx/5xx
+            let text = 'Erreur lors de l\'enregistrement.';
+            try { const j = await resp.json(); if (j && j.error) text = j.error; } catch (err) {}
+            showAlert(text);
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Valider';
+            return;
+          }
+
+          // s'assurer que la réponse JSON contient ok:true (convention)
+          const payload = await resp.json();
+          if (payload && (payload.ok === true || payload.success === true)) {
+            // afficher la modale d'après-envoi
+            afterModal.show();
+          } else {
+            showAlert('Réponse inattendue du serveur.');
+          }
+
+        } catch (err) {
+          if (err.name === 'AbortError') {
+            showAlert('La requête a expiré. Vérifiez votre connexion.');
+          } else {
+            console.error(err);
+            showAlert('Impossible d\'envoyer le formulaire pour le moment.');
+          }
+        } finally {
+          // réactiver le bouton (on garde le formulaire rempli si l'utilisateur veut modifier)
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Valider';
+        }
+      });
+
+      contBtn.addEventListener('click', () => {
+        afterModal.hide();
+        form.reset();
+        window.scrollTo({top:0, behavior:'smooth'});
+      });
+
+      noThanks.addEventListener('click', () => {
+        afterModal.hide();
+        // redirection vers la page contact finale
+        window.location.href = "/contact";
+      });
+
+    })();
+  </script>
+</body>
+</html>

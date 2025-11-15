@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Partagez vos problèmes — Commencer</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body { padding: 40px; background:#f7fafc; }
+    .hero { max-width:900px; margin:0 auto; background:white; padding:28px; border-radius:12px; box-shadow:0 6px 20px rgba(0,0,0,0.06);}
+    .cta { width:220px; font-size:18px; }
+  </style>
+</head>
+<body>
+  <div class="hero">
+    <h1 class="display-6">Exprimez-vous librement — votre voix compte</h1>
+    <p class="lead">
+      Nous sommes une équipe qui collecte les difficultés rencontrées par les adultes, afin d’identifier et résoudre les problèmes concrets.
+      Vos réponses sont <strong>anonymes</strong> jusqu’à ce que vous choisissiez de laisser vos coordonnées.
+    </p>
+
+    <p>Merci de partager avec sincérité, chaque expérience compte.</p>
+
+    <button id="startBtn" class="btn btn-primary cta">Commencer</button>
+  </div>
+
+  <!-- Modal simple de rappel (sera déclenché par JS) -->
+  <div class="modal fade" id="reminderModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-sm modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-body">
+          <p class="mb-0">Exprimez-vous ouvertement sur tous les aspects de vos difficultés vécu au quotidien, pour qu'on trouve une solution à votre problème.</p>
+        </div>
+        <div class="modal-footer">
+          <button id="reminderOk" class="btn btn-primary btn-sm">OK</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    const startBtn = document.getElementById('startBtn');
+    const reminderModal = new bootstrap.Modal(document.getElementById('reminderModal'));
+
+    startBtn.addEventListener('click', async () => {
+      // Demande au serveur de créer une session (cookie HttpOnly)
+      await fetch('/start_session', { method: 'POST' });
+      // afficher modal de rappel
+      reminderModal.show();
+    });
+
+    document.getElementById('reminderOk').addEventListener('click', () => {
+      reminderModal.hide();
+      // rediriger vers la page du formulaire
+      window.location.href = "/form";
+    });
+  </script>
+</body>
+</html>
